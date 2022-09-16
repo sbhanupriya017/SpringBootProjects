@@ -1,52 +1,59 @@
 package com.springboot.firstapp.Controllers;
 
 
-import com.springboot.firstapp.Models.Employee;
+import com.springboot.firstapp.Data.EmployeeDto;
+import com.springboot.firstapp.Repository.EmployeeRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
+
 import java.util.List;
+import java.util.Optional;
 
 @RestController
+@RequestMapping("/api/employee")
 public class EmployeeController {
 
-    private static List<Employee> _employeesList= new ArrayList<>();
-    @GetMapping("/getEmployee")
-    public Employee getEmployee()
+    private  EmployeeRepository _employeeRepository;
+    @Autowired
+    public EmployeeController(EmployeeRepository employeeRepository)
     {
-        return new Employee("Bhanu", "Priya");
+        this._employeeRepository = employeeRepository;
+    }
+    @GetMapping("/getbyid/{itemid}")
+    public Optional<EmployeeDto> getEmployee(@PathVariable("itemid") Integer id)
+    {
+        return _employeeRepository.findById(id);
     }
 
-    @GetMapping("/getAllEmployee")
-    public List<Employee> getAllEmployee()
+    @GetMapping("/getall")
+    public List<EmployeeDto> getAllEmployee()
     {
-        return _employeesList;
+        return _employeeRepository.findAll();
     }
-    @PostMapping("/addEmployee")
-    public Employee addEmployee(@RequestBody Employee employee)
+    @PostMapping("/add")
+    public EmployeeDto addEmployee(@RequestBody EmployeeDto employee)
     {
-        _employeesList.add(employee);
+        _employeeRepository.save(employee);
         return employee;
     }
     @PutMapping("/update")
-    public Employee updateEmployee(@RequestBody Employee employee)
+    public EmployeeDto updateEmployee(@RequestBody EmployeeDto employee)
     {
-        for(int i=0;i<_employeesList.size();i++)
+        Optional<EmployeeDto> current = _employeeRepository.findById(employee.getId());
+        if(current.isPresent())
         {
-            if(employee.getId()==_employeesList.get(i).getId())
-            {
-                _employeesList.get(i).setFirstName(employee.getFirstName());
-                _employeesList.get(i).setLastName(employee.getLastName());
-                break;
-            }
+            EmployeeDto obj = current.get();
+            obj.setAge(employee.getAge());
+            obj.setDepartmentId(employee.getDepartmentId());
+            obj.setName(employee.getName());
+            _employeeRepository.save(obj);
         }
         return employee;
     }
     @DeleteMapping("/delete/{id}")
-    public Employee deleteEmployee(@PathVariable int id)
+    public void deleteEmployee(@PathVariable int id)
     {
-        Employee result = _employeesList.get(id);
-        return _employeesList.get(id);
+         _employeeRepository.deleteById(id);
     }
-
 }
